@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Interview = require('../models/Interview');
+const Event = require('../models/Event');
 const { uploadImageToCloudinary } = require('../utils/cloudinary');
 
 exports.sentInvite = async (req,res) => {
@@ -14,14 +15,31 @@ exports.sentInvite = async (req,res) => {
             });
         }
 
-       const newUser = await User.create({
-                  name: name,
-                  email: email,
-                  role: 'interviewee'          
-        });
+        let newUser = await User.findOne({ email: email });
+
+        if(!newUser) {
+            newUser = await User.create({
+                name: name,
+                email: email,
+                role: 'interviewee'
+            });        
+        }
 
         if(newUser)
         {
+            
+          const existingInterview = await Interview.findOne({
+             interviewee: newUser._id,
+            timmings: timmings   
+            });
+
+           if(existingInterview) {
+                    return res.status(409).json({
+                        flag: 0,
+                        flag_message: 'Interviewee already has an interview at this time'
+                    });
+            }
+        
             const IntDetail = await Interview.create({
                  interviewer: Interviewer,
                  interviewee : newUser?._id,
@@ -65,20 +83,16 @@ exports.getAllInterviews = async (req,res) => {
             });
         }
 
-        const userDetails = await User.findById({_Id: userId})
-                                     .populate({
-                                       path: "interviews",   
-                                       populate: {
-                                         path: "events",     
-                                         model: "Event"
-                                       }
-                                    })
-                                    .exec();
+        const userDetails = await User.findById({ _id: userId })
+        .populate({
+            path: "interviews",
+            populate: [ { path: "interviewer"},{ path: "interviewee"}]
+        })
 
 
         return res.status(200).json({
             flag : 1,
-            data : userDetails 
+            userdata : userDetails 
         })
 
     }catch(err) {
@@ -104,12 +118,12 @@ exports.start_interview = async (req,res) => {
 
 
         await Interview.findByIdAndUpdate({_id:InterviewId},{
-            start_time: Date.now
+            start_time: Date.now()
         },{new:true});
 
         return res.status(200).json({
             flag : 1,
-             flag_message: 'video stored successfully'
+            flag_message: 'interview start successfully'
         })
 
     }catch(err) {
@@ -123,10 +137,9 @@ exports.start_interview = async (req,res) => {
 exports.completeInterview = async (req,res) => {
     try {
 
-        const {InterviewId} = req.body;
+        const {InterviewId,events} = req.body;
 
-        const {video} = req.files.video;
-
+        const video = req.file;
         if(!video || !InterviewId)
         {
             return res.status(404).json({
@@ -135,17 +148,36 @@ exports.completeInterview = async (req,res) => {
             });
         }
 
-        const videoUrl = await uploadImageToCloudinary(video,process.env.FOLDER_NAME)
+        console.log(events);
+        const eventArray = JSON.parse(events);
+        
+        const videoUrl = await uploadImageToCloudinary(video.path,process.env.FOLDER_NAME)
 
-        await Interview.findByIdAndUpdate({_id:InterviewId},{
+        const InterviewData = await Interview.findByIdAndUpdate({_id:InterviewId},{
             recording : videoUrl.secure_url,
             isCompeleted : true,
-            end_time: Date.now
+            end_time: Date.now(),
+            finalScore: 100 - (eventArray.length || 0)
         },{new:true});
+
+        for(let event of eventArray)
+        {
+            try{
+                const res = await Event.create({
+                          time: event?.time,
+                          type: event?.type || 'something detected'
+                })
+                InterviewData.events.push(res._id);    
+            }catch(Err)
+            {
+                console.error(Err.message);
+            }
+        }
+        await InterviewData.save();
 
         return res.status(200).json({
             flag : 1,
-             flag_message: 'video stored successfully'
+            flag_message: 'video stored successfully'
         })
 
     }catch(err) {
@@ -165,17 +197,19 @@ exports.getInterviewData = async (req,res) => {
         {
             return res.status(404).json({
                 flag: 0,
-                flag_message: 'userName is missing',
+                flag_message: 'InterviewId is missing',
             });
         }
 
-        const intDetails = await Interview.findById({_Id: InterviewId})
-                                     .populate("events")
-                                     .exec();
+            const intDetails = await Interview.findById(InterviewId)
+            .populate("events") 
+            .populate("interviewer") 
+            .populate("interviewee") 
+            .exec();
 
         return res.status(200).json({
             flag : 1,
-            data : intDetails 
+            interview : intDetails 
         })
 
     }catch(err) {

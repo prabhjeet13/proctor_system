@@ -9,9 +9,6 @@ const eventSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  description: { 
-    type: String 
-  }
 });
 
 module.exports = mongoose.model("Event", eventSchema);

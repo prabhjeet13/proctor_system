@@ -57,7 +57,7 @@ exports.checkUser = async (req,res) => {
 
         if(!userResponse)
         {
-            return res.status(401).json({
+            return res.status(400).json({
                 flag: 0,
                 flag_message: 'no user found',
             });
