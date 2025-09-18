@@ -10,7 +10,7 @@ const eventRoutes = require('./routes/Event');
 const cors = require('cors');
 
 app.use(cors({
-    origin: "http://localhost:3000", 
+    origin: "https://proctor-system.vercel.app", 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }));

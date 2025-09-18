@@ -11,7 +11,7 @@ const CreateUser = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:4001/api/v1/user-route/create/user", {
+      const response = await axios.post("https://proctor-system.onrender.com/api/v1/user-route/create/user", {
         name,
         email,
       });

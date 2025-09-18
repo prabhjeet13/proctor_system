@@ -8,7 +8,7 @@ const CheckUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:4001/api/v1/user-route/check/user", {
+      const response = await axios.post("https://proctor-system.onrender.com/api/v1/user-route/check/user", {
         userName: email,
       });
 

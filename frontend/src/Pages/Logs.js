@@ -13,7 +13,7 @@ const Logs = () => {
     const fetchLogs = async () => {
       try {
         const res = await axios.post(
-          "http://localhost:4001/api/v1/interview-route/get/interviewlogs",
+          "https://proctor-system.onrender.com/api/v1/interview-route/get/interviewlogs",
           { InterviewId: interviewid }
         );
 

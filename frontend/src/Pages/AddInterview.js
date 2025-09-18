@@ -27,7 +27,7 @@ const AddInterview = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4001/api/v1/interview-route/send/invite",
+        "https://proctor-system.onrender.com/api/v1/interview-route/send/invite",
         {
           Interviewer: userid,
           name: formData.intervieweeName,
